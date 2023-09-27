@@ -7,7 +7,6 @@ function App() {
   const [token, setToken] = useState('');
 
   const handleLogin = async () => {
-    console.log("login api called");
     try {
       const response = await fetch('https://stagev2a.rechargkit.biz/member/signin', {
         method: 'POST',
@@ -19,6 +18,9 @@ function App() {
 
         const data = await response.json();
         if(data.token){
+        let curTime = new Date();
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("startTime", curTime.toISOString());
         setToken(data.token);
         scheduleTokenRefresh();
       } else {
@@ -30,29 +32,35 @@ function App() {
   };
 
   const refreshToken = async () => {
-    console.log("refresh token called");
+    let savedTime = Date.parse(localStorage.getItem("startTime"));
+    let curTime = new Date();
+    curTime = curTime.getTime()
+    console.log(curTime, savedTime, curTime - savedTime)
+   if((curTime - savedTime) >= 19000){ 
     try {
       const response = await fetch('https://stagev2a.rechargkit.biz/member/token', {
         method: 'GET',
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
 
         const data = await response.json();
         if (data.token) {
+        localStorage.setItem("startTime", curTime.toISOString);
+        localStorage.setItem("token", data.token)
         setToken(data.token);
         scheduleTokenRefresh();
       } else {
       }
     } catch (error) {
-    }
+    }}
   };
 
   const scheduleTokenRefresh = () => {
     const tokenRefreshInterval = setInterval(() => {
       refreshToken();
-    }, 10000);
+    }, 1000);
     return () => clearInterval(tokenRefreshInterval);
   };
 
